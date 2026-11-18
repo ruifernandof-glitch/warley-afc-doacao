@@ -1,0 +1,13 @@
+{
+  "title": "Compêndio de pesquisa: análise fatorial confirmatória ordinal da intenção de doação financeira a escolas públicas estaduais de Minas Gerais",
+  "upload_type": "software",
+  "description": "Código R reprodutível (pipeline targets), tabelas e figuras agregadas e relatório Quarto da AFC ordinal (WLSMV) de 20 itens em cinco fatores (atitude, norma subjetiva, controle percebido, confiança e intenção de doar). Os dados individuais não são publicados.",
+  "creators": [
+    {"name": "Silva, Warley Borges"},
+    {"name": "Ferreira, Rui Fernando Correia"}
+  ],
+  "license": "MIT",
+  "language": "por",
+  "keywords": ["análise fatorial confirmatória", "WLSMV", "teoria do comportamento planejado", "doação", "escola pública", "R", "targets"],
+  "access_right": "open"
+}
