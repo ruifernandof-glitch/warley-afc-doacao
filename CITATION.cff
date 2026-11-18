@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: "Se usar este compêndio, cite-o conforme abaixo."
+title: "Compêndio de pesquisa: análise fatorial confirmatória ordinal da intenção de doação financeira a escolas públicas estaduais de Minas Gerais"
+type: software
+version: 1.0.0
+date-released: 2026-10-28
+license: MIT
+authors:
+  - family-names: Silva
+    given-names: Warley Borges
+  - family-names: Ferreira
+    given-names: Rui Fernando Correia
+keywords: [análise fatorial confirmatória, WLSMV, teoria do comportamento planejado, doação, escola pública, reprodutibilidade]
+# Após a primeira release no Zenodo, acrescente:
+# doi: 10.5281/zenodo.XXXXXXX

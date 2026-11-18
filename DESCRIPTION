@@ -1,0 +1,13 @@
+Package: warleyafc
+Title: Compêndio de pesquisa - AFC ordinal da intenção de doação a escolas públicas estaduais de MG
+Version: 1.0.0
+Authors@R: c(person("Warley Borges", "Silva", role = c("aut", "cre")),
+             person("Rui Fernando Correia", "Ferreira", role = "ths"))
+Description: Pipeline reprodutível (targets) da análise fatorial confirmatória
+    ordinal (WLSMV) de 20 itens em cinco fatores, com tabelas, figuras e relatório Quarto.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Depends: R (>= 4.3)
+Imports: lavaan, semTools, psych, semPlot, targets, dplyr, tibble, tidyr, readr, readxl,
+    ggplot2, scales, flextable, officer, MASS, knitr, rmarkdown
+Suggests: MVN, renv, roxygen2
