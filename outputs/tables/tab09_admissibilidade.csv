@@ -1,0 +1,17 @@
+modelo,criterio,resultado,adequado
+Principal (delta),Convergência,Sim,TRUE
+Principal (delta),Erros-padrão computados,Sim,TRUE
+Principal (delta),Menor autovalor da matriz de covariância das estimativas,-1.96e-16,TRUE
+Principal (delta),Variâncias residuais negativas,A2 (-0.0011),FALSE
+Principal (delta),Cargas padronizadas > |1|,A2 (1.001),FALSE
+Principal (delta),Carga > 1 com IC95% inteiramente acima de 1,Nenhuma,TRUE
+Principal (delta),Carga não padronizada extrema (|λ| > 10),Nenhuma,TRUE
+Principal (delta),Maior correlação latente em módulo,0.732,TRUE
+Especificação original (theta),Convergência,Sim,TRUE
+Especificação original (theta),Erros-padrão computados,Não,FALSE
+Especificação original (theta),Menor autovalor da matriz de covariância das estimativas, NA,FALSE
+Especificação original (theta),Variâncias residuais negativas,Nenhuma,TRUE
+Especificação original (theta),Cargas padronizadas > |1|,Nenhuma,TRUE
+Especificação original (theta),Carga > 1 com IC95% inteiramente acima de 1,Nenhuma,TRUE
+Especificação original (theta),Carga não padronizada extrema (|λ| > 10),A2 (493.7),FALSE
+Especificação original (theta),Maior correlação latente em módulo,0.732,TRUE

@@ -1,0 +1,11 @@
+indicador,valor
+Réplicas,200
+Convergência (%),100
+Soluções com carga > |1| (%),9
+Erros-padrão computados (%),100
+Viés relativo médio das cargas (%),-0.0015254468426141538
+Cobertura média do IC95% das cargas (%),92.60000000000001
+Rejeição do χ² a 5% (%),1.5
+RMSEA médio,0.00603155209969881
+CFI médio,0.9998485298335792
+SRMR médio,0.03161972981099786

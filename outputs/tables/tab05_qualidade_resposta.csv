@@ -1,0 +1,6 @@
+indicador,n,pct
+Resposta idêntica nos 20 itens,11,9.01639344262295
+Invariância dentro dos 5 blocos,23,18.852459016393443
+Invariância em 1 ou mais blocos,110,90.1639344262295
+Longstring >= 16 itens,14,11.475409836065573
+"Outlier multivariado (Mahalanobis p < 0,001)",9,7.377049180327869

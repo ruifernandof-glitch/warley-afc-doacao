@@ -1,0 +1,30 @@
+variavel,categoria,n,pct
+faixa_etaria,18 a 24 anos,25,"20,5"
+faixa_etaria,25 a 34 anos,17,"13,9"
+faixa_etaria,35 a 44 anos,32,"26,2"
+faixa_etaria,45 a 54 anos,34,"27,9"
+faixa_etaria,55 a 64 anos,13,"10,7"
+faixa_etaria,65 anos ou mais,< 5,
+escolaridade,Doutorado,< 5,
+escolaridade,Ensino fundamental completo,6,"4,9"
+escolaridade,Ensino médio completo,44,"36,1"
+escolaridade,Ensino médio incompleto,9,"7,4"
+escolaridade,Ensino superior completo,12,"9,8"
+escolaridade,Ensino superior incompleto,14,"11,5"
+escolaridade,Especialização,29,"23,8"
+escolaridade,Mestrado,7,"5,7"
+renda_familiar,Acima de 10 salários mínimos,< 5,
+renda_familiar,Até 2 salários mínimos,48,"39,3"
+renda_familiar,Mais de 2 até 5 salários mínimos,33,"27,0"
+renda_familiar,Mais de 5 até 10 salários mínimos,21,"17,2"
+renda_familiar,Não sei informar,17,"13,9"
+vinculo,Sou ex aluno da escola pública estadual,58,"47,5"
+vinculo,"Sou mãe, pai, responsável legal, outro familiar responsável ou diretamente envolvido no acompanhamento do estudante",64,"52,5"
+conhecimento_doacao,Não tenho certeza,6,"4,9"
+conhecimento_doacao,Não,68,"55,7"
+conhecimento_doacao,Sim,48,"39,3"
+participacao_acao,Não me lembro,5,"4,1"
+participacao_acao,Não,86,"70,5"
+participacao_acao,Sim,31,"25,4"
+experiencia_escola_publica,Não,< 5,
+experiencia_escola_publica,Sim,121,"99,2"
