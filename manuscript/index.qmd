@@ -1,0 +1,458 @@
+---
+title: "Validação do modelo de mensuração da intenção de doação financeira para escolas públicas estaduais de Minas Gerais: análise fatorial confirmatória ordinal"
+subtitle: "Relatório técnico-científico da dissertação — versão final da etapa confirmatória"
+author: "Warley Borges Silva | Orientação: Prof. Dr. Rui Fernando Correia Ferreira"
+date: last-modified
+date-format: "D [de] MMMM [de] YYYY"
+---
+
+```{r}
+#| label: setup
+invisible(lapply(list.files("../R", pattern = "\\.R$", full.names = TRUE), source, encoding = "UTF-8"))
+res <- readRDS("../outputs/models/resultados.rds")
+library(flextable)
+n2 <- function(x, d = 2) formatC(x, format = "f", digits = d, decimal.mark = ",", big.mark = ".")
+n3 <- function(x) n2(x, 3)
+pc <- function(x, d = 1) paste0(n2(x, d), "%")
+sci <- function(x) { x <- signif(x, 2); e <- floor(log10(abs(x))); paste0(n2(x / 10^e, 1), " × 10^", e, "^") }
+pv <- function(p) if (p < 0.001) "< 0,001" else paste("=", n3(p))
+apa_ft <- function(df, digits = 2, widths = NULL, size = 9) {
+  ft <- flextable(as.data.frame(df))
+  num <- names(df)[vapply(df, is.double, logical(1))]
+  if (length(num)) ft <- colformat_double(ft, j = num, digits = digits, decimal.mark = ",", big.mark = ".")
+  ft <- font(ft, fontname = "Times New Roman", part = "all")
+  ft <- fontsize(ft, size = size, part = "all")
+  ft <- border_remove(ft)
+  ft <- hline_top(ft, part = "header", border = officer::fp_border(width = 1))
+  ft <- hline_bottom(ft, part = "header", border = officer::fp_border(width = 0.75))
+  ft <- hline_bottom(ft, part = "body", border = officer::fp_border(width = 1))
+  ft <- bold(ft, part = "header")
+  ft <- padding(ft, padding = 1.5, part = "all")
+  ft <- line_spacing(ft, space = 1, part = "all")
+  if (!is.null(widths)) ft <- width(ft, width = widths) else ft <- autofit(ft)
+  ft
+}
+d <- res$data; N <- nrow(d)
+fl <- res$prep$flow$n
+fit5 <- res$fits[1, ]
+f1 <- res$fits[res$fits$modelo == "fator_unico", ]
+cmp <- res$comp
+ld <- res$loadings; rel <- res$rel; disc <- res$disc$pares; q <- res$qual
+mc <- setNames(res$mc$resumo$valor, res$mc$resumo$indicador)
+sz <- setNames(res$size$valor, res$size$indicador)
+ss <- res$sens_sum
+a2 <- ld[ld$item == "A2", ]; id3 <- ld[ld$item == "ID3", ]
+cp3 <- ld[ld$item == "CP3", ]; cp4 <- ld[ld$item == "CP4", ]
+top_mi <- res$mi_top[1, ]
+rmax <- disc[which.max(abs(disc$r)), ]
+rmin <- disc[which.min(abs(disc$r)), ]
+dec <- res$decision
+nrev <- sum(dec$decisao == "Revisar"); nman <- sum(dec$decisao == "Manter"); nexc <- sum(dec$decisao == "Excluir")
+w_c2 <- dec[dec$item == "C2", ]; w_c3 <- dec[dec$item == "C3", ]
+theta_lam <- lavaan::parTable(res$fit_theta)
+theta_a2 <- theta_lam$est[theta_lam$op == "=~" & theta_lam$rhs == "A2"]
+norm <- res$norm
+per <- format(res$prep$periodo, "%d/%m/%Y")
+n_ex <- sum(grepl("ex aluno", d$vinculo))
+riv <- res$fits[grepl("^quatro", res$fits$modelo), ]
+```
+
+# Resumo
+
+Este relatório apresenta a etapa confirmatória do instrumento de 20 itens destinado a mensurar atitude, norma subjetiva, controle comportamental percebido, confiança na escola e intenção de doação financeira a escolas públicas estaduais de Minas Gerais, construtos derivados da teoria do comportamento planejado e da literatura sobre confiança do doador [@ajzen1991; @sargeant2004]. Dos `r fl[1]` registros recebidos, `r fl[5]` atenderam às regras de elegibilidade definidas antes da análise, e a estrutura de cinco fatores correlacionados foi estimada por análise fatorial confirmatória (AFC) com estimador WLSMV, adequado a indicadores ordinais [@flora2004; @li2016]. O modelo apresentou χ²(`r fit5$gl`) = `r n2(fit5$chi2)`, *p* `r pv(fit5$p)`, CFI = `r n3(fit5$cfi)`, TLI = `r n3(fit5$tli)`, RMSEA = `r n3(fit5$rmsea)` (IC90% `r n3(fit5$rmsea_li)`–`r n3(fit5$rmsea_ls)`) e SRMR = `r n3(fit5$srmr)`, desempenho claramente superior ao do fator único e de três modelos rivais de quatro fatores [@brown2015; @xia2019].
+
+As cargas padronizadas variaram de `r n2(min(ld$carga))` a `r n2(max(ld$carga))`, a confiabilidade composta de `r n2(min(rel$omega))` a `r n2(max(rel$omega))` e a variância média extraída de `r n2(min(rel$ave))` a `r n2(max(rel$ave))`, enquanto a maior correlação latente (`r n2(rmax$r)`) e o maior HTMT (`r n2(max(disc$htmt))`) indicaram distinção empírica entre os fatores [@fornell1981; @henseler2015; @ronkko2022]. A solução, contudo, apresentou uma estimativa no limite do espaço admissível (item A2), e `r pc(q$resumo$pct[2])` dos respondentes repetiram a mesma categoria dentro de todos os blocos, o que sugere que parte das cargas próximas de 1 reflete redundância de redação e estilo de resposta [@kolenikov2012; @meade2012]. Conclui-se que a estrutura teórica é sustentada nesta amostra, mas que a versão seguinte do instrumento deve revisar a redação de `r nrev` itens e ser validada em nova amostra antes de qualquer teste estrutural [@hair2010; @creswell2002].
+
+# 1 Introdução
+
+O financiamento da educação básica pública combina transferências governamentais e mecanismos descentralizados geridos pelas próprias escolas, entre os quais se destaca o Programa Dinheiro Direto na Escola (PDDE), cuja execução depende de caixas escolares e de capacidade administrativa local [@almeida2023; @machado2024]. A literatura sobre o programa mostra que a autonomia financeira das escolas convive com insuficiência de recursos e com a mobilização de contribuições espontâneas das comunidades, prática que pode complementar o orçamento público, mas também reproduzir desigualdades entre escolas situadas em territórios com diferentes capacidades de arrecadação [@viana2022]. Por isso, estudar a disposição de pais, responsáveis e ex-alunos para doar não implica defender a substituição do dever estatal, mas compreender um comportamento já presente nas escolas e que demanda gestão transparente [@machado2024; @viana2022].
+
+A teoria do comportamento planejado (TCP) oferece um referencial consolidado para esse objetivo, pois propõe que a intenção de realizar um comportamento depende da avaliação favorável ou desfavorável dele (atitude), da pressão social percebida (norma subjetiva) e da percepção de capacidade e controle sobre sua execução (controle comportamental percebido) [@ajzen1991]. Aplicações da TCP à doação de caridade mostram que esses componentes predizem intenções de doar e que a inclusão de construtos adicionais pode melhorar a explicação do comportamento [@smith2007]. No caso de doações a instituições públicas, a confiança de que os recursos serão aplicados de forma responsável é um antecedente plausível da decisão, como indicam estudos sobre o comprometimento de doadores no setor voluntário, o que justifica incorporar a confiança como quinto construto do instrumento [@sargeant2004; @smith2007].
+
+Antes de testar relações entre construtos, contudo, é necessário demonstrar que o instrumento mede o que pretende medir, isto é, que os indicadores representam os fatores previstos, com precisão adequada e com distinção empírica entre fatores teoricamente diferentes [@brown2015; @hair2010]. A análise fatorial confirmatória (AFC) é o procedimento indicado para essa verificação quando a estrutura de mensuração é definida a priori, porque confronta um modelo teórico explícito com os dados, em vez de descobrir a estrutura a partir deles, como ocorre na análise exploratória [@brown2015; @kline2016]. Assim, a questão de pesquisa desta etapa é: em que medida um instrumento com cinco fatores correlacionados apresenta evidências de validade fatorial, convergente e discriminante e de confiabilidade para mensurar os componentes da intenção de doação financeira a escolas públicas estaduais de Minas Gerais? [@creswell2007; @hair2010]
+
+Do objetivo de validação definido no projeto derivam três hipóteses de mensuração que orientam a análise e a discussão: (H1) o modelo de cinco fatores correlacionados ajusta-se aos dados melhor que modelos rivais mais parcimoniosos; (H2) os indicadores apresentam cargas padronizadas substanciais em seus fatores e os fatores atingem confiabilidade composta e variância média extraída adequadas; e (H3) os cinco fatores são empiricamente distinguíveis entre si [@fornell1981; @brown2015]. As hipóteses causais de versões anteriores do projeto não são testadas aqui, porque a AFC estima correlações entre fatores, e não efeitos direcionais, e o desenho transversal não sustenta inferências causais [@kline2016; @creswell2002]. O relatório segue as dez etapas do protocolo de AFC adotado no projeto, com distinção entre requisitos obrigatórios e boas práticas, e todas as análises foram executadas em código R reprodutível [@hair2010; @marwick2018].
+
+# 2 Método
+
+## 2.1 Desenho, participantes e instrumento
+
+Trata-se de estudo quantitativo, transversal e de levantamento, com questionário eletrônico de adesão voluntária, delineamento apropriado para descrever atitudes e intenções de uma população em um momento específico e para avaliar propriedades de medida [@creswell2002; @creswell2007]. Os registros de data e hora da exportação indicam respostas entre `r per[1]` e `r per[2]`, e o questionário continha termo de consentimento, pergunta sobre o vínculo com escola pública estadual, conhecimento prévio sobre doações por caixa escolar, participação anterior em ações de arrecadação, os 20 itens psicométricos e perguntas de perfil [@creswell2002]. As faixas etárias observadas começam em 18 anos, de modo que nenhum participante analítico declarou ser menor de idade; ainda assim, a documentação ética deve confirmar se o formulário oferecia opção abaixo dessa faixa e se a coleta ocorreu após a aprovação do comitê de ética [@creswell2007].
+
+Cada indicador foi respondido em escala de sete pontos, de 1 (discordo totalmente) a 7 (concordo totalmente), com rótulos verbais em todas as categorias, o que caracteriza dados ordinais e não intervalares, aspecto que condiciona a escolha do estimador [@flora2004; @rhemtulla2012]. A @tbl-operacionalizacao apresenta a operacionalização prévia dos cinco construtos, com quatro indicadores exclusivos por fator, conforme as definições da TCP e da confiança do doador, e explicita que o mapeamento item–fator decorre da teoria e da construção do instrumento, e não dos dados [@ajzen1991; @ajzen2002; @sargeant2004]. Os itens de controle percebido combinam deliberadamente facetas de autoeficácia (CP1, CP2), informação (CP3) e controlabilidade (CP4), distinção que Ajzen (2002) considera conceitualmente relevante e que será retomada na interpretação das cargas [@ajzen2002].
+
+```{r}
+#| label: tbl-operacionalizacao
+#| tbl-cap: "Operacionalização a priori dos construtos e enunciados dos indicadores"
+w <- item_wording()
+op <- tibble::tibble(Construto = factor_label(item_factor()[names(w)]), Item = names(w), Enunciado = unname(w))
+apa_ft(op, widths = c(1.2, 0.5, 4.6), size = 8) |> merge_v(j = 1) |> valign(j = 1, valign = "top")
+```
+
+::: {custom-style="Table Note"}
+*Nota.* Escala de 1 (discordo totalmente) a 7 (concordo totalmente). Definições teóricas conforme Ajzen (1991, 2002), para atitude, norma subjetiva, controle percebido e intenção, e Sargeant e Lee (2004), para confiança.
+:::
+
+## 2.2 Elegibilidade e tratamento dos dados
+
+As regras de elegibilidade foram fixadas antes da estimação e aplicadas em código: exclusão de quem não concordou com o termo de consentimento, de quem declarou não possuir vínculo com escola pública estadual e de quem deixasse algum dos 20 indicadores sem resposta, sem nenhuma exclusão baseada em valores extremos, padrões de resposta ou resultados de modelos [@hair2010; @creswell2002]. Essa decisão preserva a natureza confirmatória da análise, pois exclusões motivadas pelo ajuste introduziriam flexibilidade analítica não declarada e capitalizariam características da amostra [@brown2015; @kline2016]. Indicadores de qualidade de resposta, como respostas idênticas em todos os itens, sequências longas e distância de Mahalanobis, foram calculados apenas como diagnóstico, e seu impacto foi avaliado por análise de sensibilidade declarada como pós hoc [@curran2016; @meade2012].
+
+## 2.3 Estratégia analítica e software
+
+O modelo principal é uma AFC de cinco fatores correlacionados, com cada indicador carregando apenas em seu fator, sem cargas cruzadas e sem covariâncias residuais, identificada pela fixação da variância dos fatores em 1, com 20 cargas, 10 correlações entre fatores e 120 limiares livres [@brown2015; @kline2016]. A estimação utilizou mínimos quadrados ponderados diagonalmente com erros-padrão robustos e qui-quadrado ajustado por média e variância (WLSMV), a partir de correlações policóricas, procedimento recomendado para itens ordinais por não pressupor normalidade multivariada contínua [@flora2004; @li2016]. As análises foram conduzidas em R (lavaan, semTools, psych e semPlot), em compêndio de pesquisa com pipeline targets que recalcula as etapas afetadas por alterações nos dados ou nas funções [@rosseel2012; @jorgensen2022; @revelle2024; @epskamp2015; @landau2021; @marwick2018].
+
+O ajuste global foi avaliado por combinação de índices, e não por um índice isolado: χ² escalonado e razão χ²/gl, índices incrementais CFI e TLI e índices de aproximação e resíduo RMSEA, com intervalo de confiança de 90%, e SRMR [@hu1999; @hair2010]. Como os pontos de corte usuais foram derivados para máxima verossimilhança com dados contínuos, e como CFI e TLI tendem a ser mais elevados sob WLSMV com dados ordinais, os valores foram interpretados como referências e não como limites rígidos, com peso maior para RMSEA, SRMR e diagnósticos locais [@xia2019; @savalei2021]. O modelo de cinco fatores foi comparado a um modelo de fator único e a três modelos de quatro fatores que fundem construtos adjacentes na TCP, por meio do teste de diferença de qui-quadrado escalonado, porque a superioridade sobre alternativas plausíveis é evidência mais informativa do que o ajuste absoluto isolado [@satorra2000; @brown2015].
+
+A validade convergente foi avaliada pelas cargas (referências 0,50 e 0,70), pelo ômega categórico (0,70) e pela AVE (0,50), com os coeficientes alfa como evidência complementar [@hair2010; @fornell1981; @green2009; @mcneish2018]. A validade discriminante combinou o critério de Fornell e Larcker, a razão heterotraço-monotraço (HTMT) calculada com correlações policóricas e o limite superior do intervalo de confiança das correlações latentes, conjunto recomendado por diretrizes recentes de modelagem estrutural [@fornell1981; @henseler2015; @ronkko2022; @legate2024; @russo2021; @ghasemy2020]. Por fim, resíduos de correlação, índices de modificação e análises de sensibilidade foram examinados sem reespecificação automática, e toda alteração foi tratada como pós hoc [@brown2015; @kline2016].
+
+## 2.4 Decisões analíticas e sua fundamentação
+
+A primeira decisão refere-se à parametrização do estimador WLSMV: o plano original previa a parametrização *theta*, mas, nesta amostra, a matriz de informação não pôde ser invertida, de modo que nenhum erro-padrão nem estatística escalonada foi obtido e a carga não padronizada de A2 divergiu para `r n2(theta_a2, 1)` (@tbl-admissibilidade). Como as parametrizações *delta* e *theta* são estatisticamente equivalentes quando ambas existem, e diferem apenas na escala em que as variâncias residuais são fixadas, adotou-se a parametrização *delta* como principal, decisão técnica que não altera a estrutura teórica nem as restrições do modelo [@kline2016; @rosseel2012]. A especificação *theta* foi mantida no compêndio e relatada como verificação, para que a mudança seja transparente e auditável [@brown2015].
+
+A segunda decisão manteve as sete categorias de resposta: algumas categorias inferiores dos itens de atitude têm menos de cinco respostas, o que pode instabilizar limiares, mas colapsar categorias após observar os dados altera o instrumento e, por isso, foi tratado só como sensibilidade [@flora2004; @rhemtulla2012]. A terceira decisão foi não excluir casos por padrão de resposta, que pode refletir desatenção ou concordância genuína, estimando seu efeito apenas em sensibilidade [@curran2016; @meade2012]. A quarta decisão estabeleceu, antes da inspeção dos resultados, regras para cada item: excluir somente diante de carga inferior a 0,50 ou não significativa com fundamento de conteúdo; revisar diante de carga entre 0,50 e 0,70, carga no limite do espaço admissível, resíduo superior a 0,10 ou índice de modificação superior a 10; e manter nos demais casos [@hair2010; @brown2015].
+
+A quinta decisão refere-se ao tamanho amostral, avaliado em função do modelo efetivamente estimado e não por regras gerais como dez respondentes por item, que ignoram a magnitude das cargas, o número de indicadores por fator e o estimador [@wolf2013; @kline2016]. Por isso, além de comparar o N com o número de parâmetros livres, realizou-se simulação de Monte Carlo com `r mc[["Réplicas"]]` réplicas, gerando dados ordinais com a solução estimada e com o N observado, para avaliar convergência, soluções impróprias, viés das cargas, cobertura dos intervalos e taxa de rejeição do χ² [@muthen2002; @wolf2013]. Essa estratégia responde à recomendação de que a adequação amostral seja demonstrada para o modelo e para os parâmetros de interesse, e não presumida a partir de um número de referência, como os 200 casos previstos no projeto [@muthen2002; @hair2010].
+
+# 3 Resultados
+
+## 3.1 Etapas 1 e 2: construtos, indicadores e especificação do modelo
+
+A Etapa 1, obrigatória, foi cumprida pela definição prévia de cinco construtos e de quatro indicadores exclusivos para cada um, conforme a @tbl-operacionalizacao, com fundamento na TCP para atitude, norma subjetiva, controle percebido e intenção e na literatura de confiança do doador para o quinto fator [@ajzen1991; @sargeant2004]. A Etapa 2, também obrigatória, foi cumprida pela especificação do modelo de mensuração antes da estimação, registrada no arquivo `modelo_cinco_fatores.lav` do compêndio, com cargas simples, ausência de covariâncias residuais e dez correlações livres entre fatores, de modo que nenhuma relação foi introduzida por sugestão do software [@brown2015; @kline2016]. Essa especificação é reflexiva, pois supõe que a variação em cada fator produz variação comum nos quatro itens, pressuposto coerente com itens redigidos como manifestações intercambiáveis de um mesmo julgamento [@kline2016; @hair2010].
+
+## 3.2 Etapa 3: exame preliminar dos dados
+
+A @tbl-fluxo resume o fluxo de elegibilidade: dos `r fl[1]` registros, `r fl[2]` foram excluídos por ausência de consentimento e `r fl[3]` por ausência de vínculo declarado, e nenhum caso elegível apresentou indicador ausente, resultando em `r fl[5]` respondentes com os 20 itens completos [@hair2010]. Como não houve dados ausentes nos indicadores, não foi necessário imputar valores nem recorrer a estimação com informação parcial, e todos os valores observados estavam dentro do intervalo de 1 a 7, sem erros de codificação [@kline2016; @brown2015]. Entre os participantes analíticos, `r n_ex` declararam ser ex-alunos e `r N - n_ex` pais, responsáveis ou familiares envolvidos no acompanhamento escolar, e a quase totalidade declarou ter estudado em escola pública, variável que, por ser praticamente constante, não foi usada em comparações [@creswell2002].
+
+```{r}
+#| label: tbl-fluxo
+#| tbl-cap: "Fluxo de elegibilidade dos registros"
+apa_ft(setNames(res$prep$flow, c("Etapa", "n")), widths = c(4.5, 0.8))
+```
+
+::: {custom-style="Table Note"}
+*Nota.* Regras de elegibilidade predefinidas e aplicadas em código (`R/import_clean.R`); nenhum caso foi excluído por critério estatístico [@hair2010].
+:::
+
+As estatísticas descritivas da @tbl-descritivas e a distribuição da @fig-likert mostram perfis distintos entre blocos: os itens de atitude concentram-se nas categorias superiores, com médias entre `r n2(min(res$desc$media[1:4]))` e `r n2(max(res$desc$media[1:4]))` e assimetria negativa, enquanto controle percebido e intenção têm médias próximas ou abaixo do ponto médio e distribuições achatadas, com curtose negativa [@hair2010; @kline2016]. Esse contraste é descritivo e sugere que avaliar positivamente a doação não equivale a dispor de condições ou intenção de doar, interpretação que só pode ser examinada inferencialmente após a validação da medida [@ajzen1991; @smith2007]. Nos itens de atitude, `r sum(res$freq$min_celula < 5)` indicadores têm alguma categoria com menos de cinco respostas, característica que pode tornar menos estáveis os limiares e as correlações policóricas correspondentes [@flora2004; @rhemtulla2012].
+
+```{r}
+#| label: tbl-descritivas
+#| tbl-cap: "Estatísticas descritivas dos 20 indicadores"
+t <- res$desc |> dplyr::left_join(res$freq[, c("item", "min_celula")], by = "item") |>
+  dplyr::transmute(Item = item, Construto = construto, Média = media, DP = dp, Mediana = mediana,
+                   Assimetria = assimetria, Curtose = curtose, `Piso (%)` = piso_pct, `Teto (%)` = teto_pct,
+                   `Menor célula (n)` = min_celula)
+apa_ft(t, size = 8) |> colformat_double(j = c("Piso (%)", "Teto (%)"), digits = 1, decimal.mark = ",") |>
+  colformat_double(j = "Mediana", digits = 0) |> merge_v(j = 2)
+```
+
+::: {custom-style="Table Note"}
+*Nota.* *N* = `r N`. Piso e teto indicam o percentual de respostas nas categorias 1 e 7. Curtose em excesso (normal = 0). Menor célula é a menor frequência entre as sete categorias do item [@kline2016].
+:::
+
+```{r}
+#| label: fig-likert
+#| fig-cap: "Distribuição das respostas por indicador e construto"
+#| fig-width: 6
+#| fig-height: 5.9
+plot_likert(res$freq, N)
+```
+
+::: {custom-style="Table Note"}
+*Nota.* Escala de 1 (discordo totalmente) a 7 (concordo totalmente). Barras divergentes: categorias 1 a 3 à esquerda, 5 a 7 à direita e metade da categoria neutra (4) em cada lado. Elaborada a partir dos dados da pesquisa.
+:::
+
+A normalidade multivariada foi rejeitada pelo teste de Mardia, com assimetria multivariada `r n2(norm$estatistica[1])` (*p* `r pv(norm$p[1])`) e curtose multivariada `r n2(norm$estatistica[2])` (*p* `r pv(norm$p[2])`), resultado esperado em escalas com efeitos de piso e teto [@mardia1970; @flora2004]. A @tbl-qualidade e a @fig-qualidade apresentam os diagnósticos de qualidade de resposta: `r q$resumo$n[1]` respondentes (`r pc(q$resumo$pct[1])`) escolheram a mesma categoria nos 20 itens, `r q$resumo$n[2]` (`r pc(q$resumo$pct[2])`) foram invariantes dentro de cada um dos cinco blocos e `r q$resumo$n[5]` foram classificados como outliers multivariados [@curran2016; @meade2012]. Como os itens foram apresentados agrupados por construto, o formato favorece a repetição de categorias e pode inflar as correlações entre itens do mesmo fator, efeito de contexto descrito na literatura sobre viés de método [@podsakoff2003; @meade2012].
+
+```{r}
+#| label: tbl-qualidade
+#| tbl-cap: "Diagnósticos de qualidade de resposta e normalidade"
+qq <- rbind(setNames(q$resumo, c("Indicador", "n", "%")),
+            setNames(tibble::tibble(paste("Bloco invariante:", q$por_bloco$construto), NA_integer_, q$por_bloco$pct_invariante), c("Indicador", "n", "%")))
+apa_ft(qq, digits = 1, widths = c(4.2, 0.6, 0.7))
+```
+
+::: {custom-style="Table Note"}
+*Nota.* *N* = `r N`. Nenhum caso foi excluído por esses critérios. Linhas "Bloco invariante" indicam o percentual de respondentes que deram a mesma resposta aos quatro itens do construto [@curran2016].
+:::
+
+```{r}
+#| label: fig-qualidade
+#| fig-cap: "Número de blocos de itens respondidos com uma única categoria por respondente"
+#| fig-width: 6
+#| fig-height: 3.2
+plot_response_quality(q)
+```
+
+::: {custom-style="Table Note"}
+*Nota.* Cada respondente pode ter de 0 a 5 blocos invariantes. Elaborada a partir dos dados da pesquisa.
+:::
+
+## 3.3 Etapa 4: adequação da amostra e escolha do estimador
+
+A @tbl-amostra mostra que o modelo estima `r sz[["Parâmetros livres"]]` parâmetros livres, dos quais `r sz[["Limiares estimados"]]` são limiares, a partir de `r sz[["Estatísticas amostrais (limiares + correlações policóricas)"]]` estatísticas amostrais, com `r N` respondentes, abaixo da referência operacional de 200 casos do projeto e com menos de um respondente por parâmetro livre [@kline2016; @wolf2013]. A matriz policórica precisou de suavização para ser positiva definida, com menor autovalor de `r sci(res$poly$min_eigen)` e correlação máxima entre itens de `r n2(res$poly$max_offdiag)`, sinal de que alguns pares de itens são quase colineares [@flora2004; @kline2016]. Esses números, isoladamente, recomendariam cautela, mas o tamanho amostral necessário diminui quando as cargas são elevadas e cada fator tem quatro indicadores, razão pela qual a adequação foi avaliada por simulação [@wolf2013; @muthen2002].
+
+```{r}
+#| label: tbl-amostra
+#| tbl-cap: "Informação amostral, parâmetros do modelo e desempenho simulado com o N observado"
+s1 <- res$size |> dplyr::transmute(Indicador = indicador, Valor = valor)
+s2 <- res$mc$resumo |> dplyr::transmute(Indicador = paste("Monte Carlo:", indicador), Valor = valor)
+tt <- rbind(s1, s2); tt$Valor <- ifelse(abs(tt$Valor - round(tt$Valor)) < 1e-9, formatC(tt$Valor, format = "d", big.mark = "."), n3(tt$Valor))
+apa_ft(tt, widths = c(4.6, 0.9)) |> align(j = 2, align = "right", part = "all")
+```
+
+::: {custom-style="Table Note"}
+*Nota.* Monte Carlo com `r mc[["Réplicas"]]` réplicas de *N* = `r N`, dados gerados a partir das cargas, correlações e limiares estimados (cargas limitadas a 0,985) e reestimados por WLSMV com parametrização *delta* [@muthen2002].
+:::
+
+A simulação indicou convergência em `r pc(mc[["Convergência (%)"]])` das réplicas, viés relativo médio das cargas praticamente nulo (`r pc(mc[["Viés relativo médio das cargas (%)"]], 3)`), cobertura média de `r pc(mc[["Cobertura média do IC95% das cargas (%)"]])` dos intervalos de 95% e rejeição do χ² verdadeiro em `r pc(mc[["Rejeição do χ² a 5% (%)"]])` das réplicas, desempenho que sustenta a estimação do modelo com o N disponível [@muthen2002; @wolf2013]. Ao mesmo tempo, `r pc(mc[["Soluções com carga > |1| (%)"]])` das réplicas produziram alguma carga padronizada acima de 1, embora geradas por modelo correto, o que mostra que estimativas de fronteira surgem por flutuação amostral quando as cargas se aproximam de 1 [@kolenikov2012; @wolf2013]. O WLSMV foi mantido porque os itens são ordinais e assimétricos, condição em que produz cargas menos viesadas que a máxima verossimilhança robusta, usada aqui apenas como sensibilidade [@li2016; @rhemtulla2012].
+
+## 3.4 Etapa 5: estimação, identificação e admissibilidade
+
+A @tbl-admissibilidade compara as parametrizações: a *theta* convergiu sem erros-padrão nem estatísticas escalonadas, e a carga não padronizada de A2 atingiu `r n2(theta_a2, 1)`, sintoma de variância residual tendendo a zero [@kolenikov2012; @kline2016]. Na parametrização *delta*, o modelo convergiu, todos os erros-padrão foram computados e as correlações latentes ficaram abaixo de 1, mas A2 apresentou carga padronizada de `r n3(a2$carga)` (IC95% `r n3(a2$ic_inf)`–`r n3(a2$ic_sup)`) e variância residual ligeiramente negativa, caracterizando um caso de Heywood [@brown2015; @kolenikov2012]. Como o intervalo de confiança inclui 1 e a simulação mostrou que valores desse tipo surgem por flutuação amostral, o caso foi interpretado como estimativa de fronteira compatível com uma variância residual populacional próxima de zero, e não como evidência de especificação incorreta [@kolenikov2012; @wolf2013].
+
+```{r}
+#| label: tbl-admissibilidade
+#| tbl-cap: "Convergência e admissibilidade da solução nas parametrizações delta e theta"
+ad <- rbind(res$adm, res$adm_theta) |> dplyr::transmute(Modelo = modelo, Critério = criterio, Resultado = gsub("(\\d)\\.(\\d)", "\\1,\\2", resultado),
+                                                          Adequado = ifelse(adequado, "Sim", "Não"))
+apa_ft(ad, widths = c(1.6, 2.7, 1.3, 0.7), size = 8) |> merge_v(j = 1) |> valign(j = 1, valign = "top")
+```
+
+::: {custom-style="Table Note"}
+*Nota.* Valores de autovalor da ordem de 10^-16^ correspondem a zero numérico. Critérios conforme Brown (2015) e Kolenikov e Bollen (2012).
+:::
+
+Ainda assim, uma estimativa de fronteira não deve ser ignorada, pois indica que o item compartilha quase toda a sua variância com o fator e, portanto, com os demais itens de atitude, o que, em escalas curtas, costuma refletir sobreposição de redação [@brown2015; @kline2016]. Os enunciados de A2 ("forma importante de apoiar a educação") e de A3 ("pode trazer benefícios para os estudantes") expressam praticamente o mesmo julgamento instrumental, e a correlação policórica entre eles foi de `r n2(res$poly$rho["A2","A3"])`, o que reforça a hipótese de redundância [@ajzen1991; @brown2015]. Por isso, a solução *delta* foi aceita como interpretável, com o caso de Heywood relatado explicitamente e examinado nas análises de sensibilidade e na tabela de decisão por item [@kolenikov2012; @hair2010].
+
+## 3.5 Etapa 6: ajuste global
+
+A @tbl-ajuste mostra que o modelo de cinco fatores obteve χ²(`r fit5$gl`) = `r n2(fit5$chi2)`, *p* `r pv(fit5$p)`, razão χ²/gl de `r n2(fit5$chi2_gl)`, CFI = `r n3(fit5$cfi)`, TLI = `r n3(fit5$tli)`, RMSEA = `r n3(fit5$rmsea)` (IC90% `r n3(fit5$rmsea_li)`–`r n3(fit5$rmsea_ls)`) e SRMR = `r n3(fit5$srmr)` [@hu1999; @hair2010]. O χ² significativo indica que o ajuste não é exato, mas esse teste é sensível a pequenos desvios e não foi interpretado isoladamente; a razão χ²/gl abaixo de 2 e o SRMR baixo indicam resíduos pequenos, enquanto o RMSEA situa-se em faixa de ajuste aceitável, com limite superior do intervalo acima de 0,08 [@hu1999; @kline2016]. Os valores de CFI e TLI próximos de 1 devem ser lidos com cautela, porque sob WLSMV com dados ordinais esses índices tendem a ser mais favoráveis do que sob máxima verossimilhança e, quando as correlações entre itens são muito elevadas, como aqui, o modelo nulo de referência ajusta-se muito mal, o que eleva os índices incrementais [@xia2019; @savalei2021].
+
+```{r}
+#| label: tbl-ajuste
+#| tbl-cap: "Índices de ajuste global do modelo a priori e dos modelos rivais"
+lab <- c(`Cinco fatores (a priori)` = "Cinco fatores (a priori)", fator_unico = "Fator único",
+         quatro_cp_int = "Quatro fatores: CP + intenção", quatro_ns_int = "Quatro fatores: NS + intenção",
+         quatro_att_conf = "Quatro fatores: atitude + confiança")
+ft <- res$fits |> dplyr::left_join(dplyr::rename(res$comp, p_diff = p), by = c("modelo" = "rival")) |>
+  dplyr::transmute(Modelo = lab[modelo], `χ²` = chi2, gl = as.integer(gl), `χ²/gl` = chi2_gl, CFI = cfi, TLI = tli,
+                   RMSEA = rmsea, `IC90%` = paste0(n3(rmsea_li), "–", n3(rmsea_ls)), SRMR = srmr,
+                   `Δχ²` = delta_chi2, `Δgl` = as.integer(delta_gl),
+                   `p (Δχ²)` = ifelse(is.na(p_diff), "", ifelse(p_diff < .001, "< 0,001", n3(p_diff))))
+apa_ft(ft, digits = 3, size = 7.5) |> colformat_double(j = c("χ²", "χ²/gl", "Δχ²"), digits = 2, decimal.mark = ",")
+```
+
+::: {custom-style="Table Note"}
+*Nota.* *N* = `r N`. Estimador WLSMV, parametrização *delta*; χ² e índices escalonados (média e variância). Δχ² é o teste de diferença escalonado em relação ao modelo de cinco fatores [@satorra2000].
+:::
+
+A comparação com modelos rivais oferece evidência mais forte do que os índices absolutos: o modelo de fator único apresentou RMSEA de `r n3(f1$rmsea)` e SRMR de `r n3(f1$srmr)`, com Δχ²(`r cmp$delta_gl[1]`) = `r n2(cmp$delta_chi2[1])`, *p* `r pv(cmp$p[1])`, e cada um dos três modelos de quatro fatores ajustou-se significativamente pior, com RMSEA entre `r n3(min(riv$rmsea))` e `r n3(max(riv$rmsea))` e Δχ² com *p* < 0,001 [@brown2015; @satorra2000]. A rejeição do fator único indica que as respostas não se reduzem a uma avaliação geral favorável ou desfavorável à doação, e a rejeição das fusões entre controle e intenção, entre norma e intenção e entre atitude e confiança mostra que os construtos adjacentes na TCP não são empiricamente intercambiáveis nesta amostra [@ajzen1991; @brown2015]. Em conjunto, os resultados sustentam a hipótese H1, com a ressalva de que o RMSEA pontual indica ajuste aceitável, e não excelente, o que é compatível com os desvios locais examinados na Etapa 10 [@hu1999; @xia2019].
+
+## 3.6 Etapa 7: cargas fatoriais e validade convergente
+
+A @tbl-cargas e a @fig-cargas mostram que todas as cargas padronizadas têm o sinal esperado, são estatisticamente significativas e superam 0,70, variando de `r n2(min(ld$carga))` a `r n2(max(ld$carga))`, com `r sum(ld$carga >= 0.90)` dos 20 indicadores acima de 0,90 [@hair2010; @brown2015]. As cargas mais baixas pertencem a CP3 (`r n2(cp3$carga)`) e CP4 (`r n2(cp4$carga)`), itens que medem conhecimento sobre como doar e controlabilidade da decisão, facetas do controle comportamental percebido conceitualmente distintas da autoeficácia representada por CP1 e CP2, o que torna esse resultado teoricamente esperado e não um sinal de falha dos itens [@ajzen2002]. Os valores de R² indicam que o fator explica entre `r pc(100 * min(ld$r2), 0)` e quase 100% da variância latente de cada indicador, nível de precisão que supera amplamente as referências usuais [@hair2010; @kline2016].
+
+```{r}
+#| label: tbl-cargas
+#| tbl-cap: "Cargas fatoriais padronizadas, erros-padrão, intervalos de confiança e R²"
+tl <- ld |> dplyr::transmute(Construto = construto, Item = item, Carga = carga, EP = ep,
+                             `IC95%` = paste0(n3(ic_inf), "–", n3(ic_sup)),
+                             p = ifelse(p < .001, "< 0,001", n3(p)), `R²` = r2)
+apa_ft(tl, digits = 3, size = 8) |> merge_v(j = 1) |> valign(j = 1, valign = "top")
+```
+
+::: {custom-style="Table Note"}
+*Nota.* *N* = `r N`. Solução completamente padronizada (WLSMV, *delta*). R² é a proporção da variância da resposta latente explicada pelo fator. Cargas acima de 1 indicam estimativa de fronteira [@kolenikov2012].
+:::
+
+```{r}
+#| label: fig-cargas
+#| fig-cap: "Cargas fatoriais padronizadas com intervalos de confiança de 95%"
+#| fig-width: 6
+#| fig-height: 6.2
+plot_loadings(ld)
+```
+
+::: {custom-style="Table Note"}
+*Nota.* Linhas tracejadas em 0,50 e 0,70, referências de Hair et al. (2010); linha contínua em 1. Elaborada a partir dos resultados da AFC.
+:::
+
+A magnitude das cargas, contudo, não pode ser interpretada apenas como virtude: cargas acima de 0,95 em quase todos os fatores significam que os itens de um bloco são, para os respondentes, quase permutáveis, o que pode decorrer de redação muito semelhante, do agrupamento dos itens por construto e da parcela de respondentes que repetiu a mesma categoria dentro de cada bloco [@brown2015; @podsakoff2003; @meade2012]. Nesse cenário, a validade convergente está demonstrada no sentido estrito, porque os itens convergem para o mesmo fator, mas a amplitude de conteúdo de cada construto pode estar estreita, porque itens quase redundantes acrescentam precisão sem ampliar a cobertura do domínio teórico, limitação que os índices de ajuste não detectam [@brown2015; @kline2016]. Por isso, a hipótese H2 é sustentada estatisticamente, com a recomendação de que a próxima versão diversifique as formulações dentro de cada fator [@hair2010; @brown2015].
+
+## 3.7 Etapa 8: confiabilidade composta e variância média extraída
+
+A @tbl-confiabilidade apresenta ômega categórico entre `r n2(min(rel$omega))` e `r n2(max(rel$omega))` e AVE entre `r n2(min(rel$ave))` e `r n2(max(rel$ave))`, valores superiores às referências de 0,70 e 0,50 para todos os construtos, com o controle percebido como o fator de menor precisão, em consequência das cargas de CP3 e CP4 [@fornell1981; @hair2010; @green2009]. O alfa de Cronbach, apresentado apenas de forma complementar, variou de `r n2(min(rel$alfa))` a `r n2(max(rel$alfa))`, e o alfa ordinal foi ligeiramente superior, padrão esperado quando a correlação de Pearson subestima a associação entre respostas categóricas [@mcneish2018; @flora2004]. Valores de confiabilidade composta acima de 0,95 em quatro construtos sugerem, novamente, redundância entre itens, interpretação adotada por diretrizes de modelagem estrutural que tratam valores dessa magnitude como sinal de itens semanticamente repetidos e não como precisão desejável [@legate2024; @russo2021; @ghasemy2020].
+
+```{r}
+#| label: tbl-confiabilidade
+#| tbl-cap: "Confiabilidade composta, variância média extraída e coeficientes alfa"
+tr <- rel |> dplyr::transmute(Construto = construto, `Ômega` = omega, AVE = ave, `√AVE` = raiz_ave,
+                              `Alfa de Cronbach` = alfa, `Alfa ordinal` = alfa_ordinal)
+apa_ft(tr, digits = 3, widths = c(1.6, 0.8, 0.8, 0.8, 1.1, 1))
+```
+
+::: {custom-style="Table Note"}
+*Nota.* Ômega categórico calculado por `semTools::compRelSEM()` [@green2009; @jorgensen2022]; AVE segundo Fornell e Larcker (1981). Os coeficientes alfa são evidência complementar [@mcneish2018].
+:::
+
+## 3.8 Etapa 9: validade discriminante
+
+A @tbl-discriminante e a @fig-discriminante mostram que as correlações latentes variaram de `r n2(min(disc$r))` (`r factor_label(rmin$fator_1)` e `r tolower(factor_label(rmin$fator_2))`) a `r n2(max(disc$r))` (`r factor_label(rmax$fator_1)` e `r tolower(factor_label(rmax$fator_2))`), com o maior limite superior de intervalo de confiança em `r n2(max(disc$ic_sup))`, distante de 1 [@ronkko2022; @brown2015]. O critério de Fornell e Larcker foi atendido em todos os `r nrow(disc)` pares, pois a raiz quadrada da AVE de cada fator superou suas correlações com os demais, e todos os valores de HTMT ficaram abaixo de 0,85, com máximo de `r n2(max(disc$htmt))` [@fornell1981; @henseler2015]. A convergência dos três critérios indica que os fatores são empiricamente distinguíveis, o que sustenta a hipótese H3, embora a correlação de `r n2(rmax$r)` entre norma subjetiva e intenção mostre sobreposição considerável, coerente com o papel teórico da norma como antecedente da intenção [@ajzen1991; @smith2007].
+
+```{r}
+#| label: tbl-discriminante
+#| tbl-cap: "Correlações latentes, HTMT e critério de Fornell-Larcker por par de fatores"
+td <- disc |> dplyr::transmute(Par = paste(factor_label(fator_1), "–", factor_label(fator_2)), r = r, EP = ep,
+                               `IC95%` = paste0(n3(ic_inf), "–", n3(ic_sup)), HTMT = htmt,
+                               `Fornell-Larcker` = ifelse(fornell_larcker, "Atendido", "Violado"),
+                               `HTMT < 0,85` = ifelse(htmt_085, "Sim", "Não"))
+apa_ft(td, digits = 3, size = 8)
+```
+
+::: {custom-style="Table Note"}
+*Nota.* Correlações latentes da solução WLSMV; HTMT com correlações policóricas [@henseler2015]. Fornell-Larcker é atendido quando a √AVE de ambos os fatores excede |r| [@fornell1981].
+:::
+
+```{r}
+#| label: fig-discriminante
+#| fig-cap: "Correlações latentes entre fatores e razões heterotraço-monotraço"
+#| fig-width: 6
+#| fig-height: 4.6
+plot_discriminant(res$fit, res$disc)
+```
+
+::: {custom-style="Table Note"}
+*Nota.* Triângulo inferior: correlações latentes; triângulo superior: HTMT policórico. Elaborada a partir dos resultados da AFC.
+:::
+
+## 3.9 Etapa 10: diagnóstico, sensibilidade e decisão por item
+
+A @tbl-diagnostico apresenta os resíduos de correlação superiores a 0,10 e os maiores índices de modificação: apenas `r nrow(res$resid$acima)` dos 190 pares de itens excederam esse limite, sendo o maior entre C3 e A1 (`r n2(res$resid$acima$residuo[1])`), e o maior índice de modificação correspondeu à covariância residual entre C2 e C3 (MI = `r n2(top_mi$mi, 1)`) [@kline2016; @brown2015]. Os demais índices de modificação referem-se principalmente a cargas cruzadas pequenas de C4 e C2 em outros fatores, com mudanças esperadas padronizadas inferiores a 0,20, magnitude sem relevância substantiva que não justifica liberar parâmetros [@brown2015; @kline2016]. Nenhuma dessas sugestões foi incorporada ao modelo, porque a covariância entre C2 e C3 não foi prevista teoricamente e sua inclusão apenas absorveria a redundância de redação que deve ser corrigida no instrumento [@hair2010; @brown2015].
+
+```{r}
+#| label: tbl-diagnostico
+#| tbl-cap: "Resíduos de correlação acima de 0,10 e principais índices de modificação"
+r1 <- res$resid$acima |> dplyr::transmute(Tipo = "Resíduo de correlação", Parâmetro = paste(item_1, "–", item_2), Valor = residuo, `EPC padronizada` = NA_real_)
+r2 <- utils::head(res$mi_top, 8) |> dplyr::transmute(Tipo = paste("MI:", tolower(tipo)), Parâmetro = parametro, Valor = mi, `EPC padronizada` = epc_padronizado)
+apa_ft(rbind(r1, r2), digits = 3, widths = c(2.4, 1.3, 0.8, 1.2))
+```
+
+::: {custom-style="Table Note"}
+*Nota.* Resíduos de correlação na métrica de Bentler; MI = índice de modificação; EPC = mudança esperada no parâmetro. Nenhum parâmetro foi liberado [@brown2015].
+:::
+
+```{r}
+#| label: fig-residuos
+#| fig-cap: "Matriz de resíduos de correlação do modelo de cinco fatores"
+#| fig-width: 6
+#| fig-height: 5.8
+plot_residuals(res$resid)
+```
+
+::: {custom-style="Table Note"}
+*Nota.* Escala divergente limitada a ±0,20; apenas resíduos com valor absoluto acima de 0,10 são rotulados. Elaborada a partir dos resultados da AFC.
+:::
+
+A @fig-residuos mostra que os resíduos estão distribuídos sem padrões concentrados em um bloco, o que reforça a adequação da estrutura fatorial, e que os desvios mais relevantes envolvem itens de confiança e de atitude, cujo conteúdo trata da destinação dos recursos e de seus benefícios para os estudantes [@kline2016; @sargeant2004]. A @tbl-sensibilidade resume as análises de sensibilidade, todas pós hoc: com sete categorias colapsadas em cinco, o caso de Heywood desapareceu e o RMSEA caiu para `r n3(ss$rmsea[3])`; sem os `r q$resumo$n[1]` respondentes com respostas idênticas, o RMSEA foi `r n3(ss$rmsea[4])` e a maior correlação latente `r n2(ss$r_latente_max[4])`; e, com estimação por máxima verossimilhança robusta, o CFI foi `r n3(ss$cfi[5])` e o RMSEA `r n3(ss$rmsea[5])` [@rhemtulla2012; @li2016]. Em todas as variações, a menor carga foi `r n2(min(ss$carga_min))`, a menor AVE `r n2(min(ss$ave_min))` e a maior correlação latente `r n2(max(ss$r_latente_max))`, de modo que as conclusões sobre convergência e discriminância não dependem das decisões analíticas tomadas [@kline2016; @brown2015].
+
+```{r}
+#| label: tbl-sensibilidade
+#| tbl-cap: "Análises de sensibilidade do modelo de cinco fatores"
+tsn <- ss |> dplyr::transmute(`Análise` = analise, n = as.integer(n), EP = erros_padrao, `χ²` = chi2, gl = as.integer(gl), CFI = cfi,
+                              RMSEA = rmsea, SRMR = srmr, `Carga mín.` = carga_min, `Carga máx.` = carga_max,
+                              `AVE mín.` = ave_min, `r latente máx.` = r_latente_max)
+apa_ft(tsn, digits = 3, size = 7.5) |> colformat_double(j = "χ²", digits = 2, decimal.mark = ",")
+```
+
+::: {custom-style="Table Note"}
+*Nota.* Análises pós hoc; não substituem o modelo principal. EP indica se os erros-padrão foram computados. Para MLR, CFI e RMSEA robustos [@rhemtulla2012]. Na parametrização *theta*, χ² escalonado, CFI e RMSEA não foram obtidos.
+:::
+
+A @tbl-decisao-estat reúne as evidências estatísticas por item, incluindo o ajuste do modelo sem cada indicador, e a @tbl-decisao-final apresenta a decisão e a justificativa teórica, combinando estatística, teoria e validade de conteúdo, como exige o protocolo [@hair2010; @brown2015]. Pelas regras predefinidas, `r nman` itens foram mantidos, `r nrev` foram classificados como "revisar" e `r nexc` foi excluído; "revisar" significa manter o item no modelo desta amostra e reformular seu enunciado na próxima versão, porque nenhum deles apresentou carga baixa e todos cobrem facetas relevantes do construto [@hair2010; @creswell2002]. A retirada de C2 ou de C3 reduziria o RMSEA para cerca de `r n3(min(w_c2$rmsea_sem, w_c3$rmsea_sem))`, mas essa melhora decorre de remover a redundância entre dois itens de confiança, e não justifica, por si só, eliminar um item cujo conteúdo — aplicação em benefício dos estudantes ou prestação de contas — é central para a confiança do doador [@sargeant2004; @brown2015].
+
+```{r}
+#| label: tbl-decisao-estat
+#| tbl-cap: "Evidências estatísticas por indicador para a decisão de manutenção"
+te <- dec |> dplyr::transmute(Item = item, Construto = construto, Carga = carga, EP = ep,
+                              p = ifelse(p < .001, "< 0,001", n3(p)), `R² do item` = r2,
+                              `Contrib. AVE` = contribuicao_ave, `AVE fator` = ave_fator,
+                              Discriminante = discriminante,
+                              `CFI/RMSEA/SRMR com` = paste(n3(cfi_com), n3(rmsea_com), n3(srmr_com), sep = " / "),
+                              `CFI/RMSEA/SRMR sem` = paste(n3(cfi_sem), n3(rmsea_sem), n3(srmr_sem), sep = " / "))
+apa_ft(te, digits = 3, size = 6.5) |> merge_v(j = c("Construto", "AVE fator", "Discriminante", "CFI/RMSEA/SRMR com"))
+```
+
+::: {custom-style="Table Note"}
+*Nota.* Contribuição para a AVE = R² do item dividido pelo número de itens do fator. "Sem" refere-se ao modelo reestimado sem o item (sensibilidade pós hoc). Discriminante: maior HTMT do fator e situação do critério de Fornell-Larcker [@fornell1981; @henseler2015].
+:::
+
+```{r}
+#| label: tbl-decisao-final
+#| tbl-cap: "Decisão final por indicador e justificativa teórica e de conteúdo"
+tf <- dec |> dplyr::transmute(Item = item, Decisão = decisao, `Critério acionado` = criterio, `Justificativa teórica e de conteúdo` = justificativa)
+apa_ft(tf, size = 7.5, widths = c(0.45, 0.65, 1.7, 3.5))
+```
+
+::: {custom-style="Table Note"}
+*Nota.* Regras definidas antes da análise: excluir se carga < 0,50 ou não significativa com fundamento de conteúdo; revisar se carga entre 0,50 e 0,70, IC95% contendo 1, resíduo > 0,10 ou MI > 10; manter nos demais casos [@hair2010; @brown2015].
+:::
+
+A @fig-diagrama apresenta o modelo final, idêntico ao especificado a priori, com as cargas padronizadas de cada indicador; as correlações entre fatores, omitidas do diagrama para preservar a legibilidade, estão na @fig-discriminante e na @tbl-discriminante [@brown2015; @epskamp2015]. Como não houve reespecificação, o modelo inicial e o modelo final coincidem, e as alterações discutidas acima constituem recomendações para a próxima versão do instrumento, que deverão ser avaliadas em nova amostra, preferencialmente com tamanho que permita separar uma subamostra de validação [@kline2016; @hair2010]. Essa transparência é necessária porque modificações sugeridas pelos próprios dados tendem a capitalizar o acaso e só adquirem estatuto confirmatório quando replicadas de forma independente [@brown2015; @creswell2002].
+
+```{r}
+#| label: fig-diagrama
+#| fig-cap: "Diagrama do modelo de mensuração de cinco fatores com cargas padronizadas"
+#| fig-width: 6.2
+#| fig-height: 2.5
+plot_path_diagram(ld)
+```
+
+::: {custom-style="Table Note"}
+*Nota.* Fatores correlacionados livremente. Variâncias residuais e limiares omitidos. Correlações entre fatores na @fig-discriminante. Elaborada a partir dos resultados da AFC.
+:::
+
+# 4 Discussão
+
+Os resultados sustentam as três hipóteses de mensuração: a estrutura de cinco fatores ajustou-se melhor que todas as alternativas plausíveis, as cargas e a confiabilidade superaram as referências e os fatores mostraram distinção empírica por três critérios independentes [@brown2015; @fornell1981; @henseler2015]. Esse padrão é coerente com a TCP, segundo a qual atitude, norma subjetiva e controle percebido são componentes distintos do processo de formação da intenção, e com aplicações à doação que mostram a utilidade de incluir construtos adicionais ao modelo original [@ajzen1991; @smith2007]. A distinção entre confiança e atitude, com correlação de `r n2(disc$r[disc$fator_1 == "ATT" & disc$fator_2 == "CONF"])`, é particularmente relevante para o objeto, porque indica que valorizar a doação não equivale a confiar na gestão escolar dos recursos, distinção que a literatura sobre doadores trata como determinante do comprometimento [@sargeant2004].
+
+A magnitude das correlações também é informativa: as associações mais fortes da intenção ocorreram com norma subjetiva e com controle percebido, enquanto a atitude, apesar de muito favorável em termos descritivos, foi o fator menos correlacionado com o controle percebido [@ajzen1991; @ajzen2002]. Esses resultados sugerem que doar a escolas públicas depende menos de avaliar bem a doação e mais de dispor de condições e de perceber apoio social, leitura hipotética, pois correlações transversais não estabelecem causalidade [@kline2016; @creswell2002]. Do ponto de vista aplicado, a baixa concordância com os itens de controle percebido, sobretudo CP3, sobre saber como buscar informações, sugere que a transparência dos procedimentos das caixas escolares é uma dimensão a ser considerada por gestores e por pesquisas futuras [@machado2024; @viana2022].
+
+O principal limite metodológico revelado pela AFC é a combinação de cargas próximas de 1, caso de Heywood em A2 e matriz policórica quase singular, padrão que aponta mais para redundância de redação e para estilo de resposta do que para deficiências de validade [@kolenikov2012; @brown2015]. A proporção de respondentes invariantes dentro de cada bloco, associada à apresentação dos itens agrupados por construto, pode ter inflado a consistência interna e as cargas, o que significa que os indicadores de qualidade aqui relatados devem ser lidos como limites superiores [@podsakoff2003; @meade2012]. A literatura sobre modelagem estrutural recomenda, nesses casos, que a próxima versão intercale itens de construtos diferentes, diversifique as formulações e inclua itens de verificação de atenção, medidas que reduzem respostas automáticas sem alterar o conteúdo teórico [@podsakoff2003; @curran2016].
+
+Outras limitações devem ser consideradas: a amostra é não probabilística, obtida por adesão, localizada e inferior à meta de 200 respondentes do projeto, o que restringe a generalização para a população de pais, responsáveis e ex-alunos das escolas estaduais de Minas Gerais [@creswell2002; @creswell2007]. A simulação de Monte Carlo mostrou que o modelo é estimável com o N disponível, mas a amostra não permite testar invariância de mensuração entre ex-alunos e responsáveis, nem separar subamostras de calibração e validação, procedimentos necessários para confirmar as revisões propostas [@muthen2002; @wolf2013]. Por fim, a desejabilidade social pode ter favorecido respostas positivas nos itens de atitude, e o caráter autodeclarado da intenção não garante comportamento efetivo de doação, lacuna que estudos longitudinais poderiam enfrentar com medidas de comportamento observado [@ajzen1991; @smith2007].
+
+As diretrizes que orientaram o protocolo, como transparência, combinação de critérios de validade e reprodutibilidade computacional, foram aplicadas, ainda que esta análise use o enfoque baseado em covariância e não o de mínimos quadrados parciais [@legate2024; @russo2021; @ghasemy2020]. Essa escolha é coerente com o objetivo confirmatório da etapa, pois a AFC baseada em covariância testa a adequação de um modelo de fatores comuns aos dados, ao passo que o enfoque de mínimos quadrados parciais privilegia a predição e trata os construtos como compósitos [@russo2021; @legate2024]. A adoção de critérios como o HTMT, originalmente proposto para modelos de variância, foi mantida porque seu uso como medida de distinção entre fatores é recomendado também em AFC, desde que calculado com correlações apropriadas aos dados ordinais [@henseler2015; @ronkko2022].
+
+# 5 Conclusão
+
+A etapa confirmatória demonstrou que o instrumento de 20 itens apresenta evidências de validade fatorial, convergente e discriminante e de confiabilidade para mensurar atitude, norma subjetiva, controle percebido, confiança e intenção de doação financeira a escolas públicas estaduais, com o modelo especificado a priori mantido sem reespecificações [@brown2015; @hair2010]. Essas evidências vêm acompanhadas de limitações que devem constar na dissertação: estimativa de fronteira em A2, redundância de redação, respostas invariantes e amostra menor que a prevista [@kolenikov2012; @meade2012]. Recomenda-se que o modelo estrutural, se incluído na dissertação, seja apresentado como exploratório nesta amostra, e que a próxima coleta utilize uma versão revisada dos `r nrev` itens indicados, com itens intercalados e tamanho amostral suficiente para validação cruzada [@kline2016; @creswell2002].
+
+Do ponto de vista da reprodutibilidade, todos os números, tabelas e figuras deste relatório são gerados automaticamente pelo compêndio de pesquisa, cujo pipeline permite refazer integralmente a análise a partir dos dados brutos e documentar as versões dos pacotes utilizados [@marwick2018; @landau2021]. Os dados individuais não devem ser publicados em repositório aberto, porque a combinação de faixa etária, escolaridade, renda e vínculo pode permitir reidentificação em comunidades escolares pequenas, de modo que a versão pública do compêndio contém código, documentação e resultados agregados [@creswell2007]. Com essas salvaguardas, o instrumento está apto a ser utilizado na etapa seguinte da pesquisa, com a cautela interpretativa que a amostra exige [@hair2010; @brown2015].
+
+# Referências
+
+::: {#refs}
+:::
+
+# Apêndice A — Perfil agregado dos respondentes
+
+```{r}
+#| label: tbl-perfil
+#| tbl-cap: "Perfil dos respondentes analíticos"
+vl <- c(faixa_etaria = "Faixa etária", escolaridade = "Escolaridade", renda_familiar = "Renda familiar",
+        vinculo = "Vínculo com a escola", conhecimento_doacao = "Conhecia a doação via caixa escolar",
+        participacao_acao = "Já participou de arrecadação", experiencia_escola_publica = "Estudou em escola pública")
+pf <- suppress_small(res$profile) |> dplyr::transmute(Variável = vl[variavel], Categoria = categoria, n = n, `%` = pct)
+apa_ft(pf, widths = c(2, 3, 0.5, 0.6), size = 8) |> align(j = 3:4, align = "right", part = "all") |> merge_v(j = 1) |> valign(j = 1, valign = "top")
+```
+
+::: {custom-style="Table Note"}
+*Nota.* *N* = `r N`. Células com menos de cinco respondentes suprimidas para reduzir o risco de reidentificação.
+:::
+
+# Apêndice B — Reprodutibilidade
+
+A análise está organizada como compêndio de pesquisa, estrutura que reúne dados, código, resultados e texto em um único projeto versionado, de modo que qualquer leitor possa refazer a análise e verificar cada número do relatório [@marwick2018]. Os dados brutos e processados ficam em `data/`, as funções documentadas em `R/`, os 11 scripts numerados em `analysis/`, as saídas em `outputs/`, este manuscrito em `manuscript/` e a documentação em `docs/` [@marwick2018]. Os dados individuais permanecem em repositório privado, e a versão pública contém apenas código, documentação e resultados agregados, com instruções para gerar o DOI no Zenodo a cada versão publicada no GitHub [@marwick2018; @creswell2007].
+
+A execução completa é feita por `targets::tar_make()`, que reconstrói apenas as etapas afetadas por mudanças, ou por `source("analysis/run_all.R")`, alternativa sequencial, e as versões dos pacotes são registradas no arquivo `renv.lock` [@landau2021]. Esta análise foi executada em `r res$session$R.version$version.string`, com lavaan `r packageVersion("lavaan")`, semTools `r packageVersion("semTools")`, psych `r packageVersion("psych")` e targets `r packageVersion("targets")`; a simulação de Monte Carlo usou semente fixa para garantir resultados idênticos em novas execuções, e o script `check_paragraphs.py` verifica, no PDF renderizado, se cada parágrafo do relatório mantém entre 7 e 11 linhas [@rosseel2012; @jorgensen2022; @muthen2002].

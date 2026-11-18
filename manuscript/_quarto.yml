@@ -1,0 +1,23 @@
+project:
+  type: default
+lang: pt-BR
+bibliography: references.bib
+csl: apa.csl
+link-citations: false
+crossref:
+  tbl-title: "Tabela"
+  fig-title: "Figura"
+  title-delim: "."
+  tbl-prefix: "Tabela"
+  fig-prefix: "Figura"
+execute:
+  echo: false
+  warning: false
+  message: false
+format:
+  docx:
+    reference-doc: reference.docx
+    toc: false
+    number-sections: false
+    fig-dpi: 300
+    fig-width: 6.3
