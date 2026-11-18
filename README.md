@@ -1,5 +1,7 @@
 # AFC ordinal — intenção de doação financeira a escolas públicas estaduais (MG)
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24347083.svg)](https://doi.org/10.5281/zenodo.24347083)
+
 Compêndio de pesquisa da etapa confirmatória da dissertação de **Warley Borges Silva**
 (orientação: Prof. Dr. Rui Fernando Correia Ferreira). Executa as 10 etapas do protocolo de
 análise fatorial confirmatória (AFC) para 20 itens em cinco fatores — atitude, norma subjetiva,
@@ -90,7 +92,7 @@ Apêndice C da dissertação e em `docs/codebook.md`.
 
 Silva, W. B., & Ferreira, R. F. C. (2026). *Compêndio de pesquisa: análise fatorial
 confirmatória ordinal da intenção de doação financeira a escolas públicas estaduais de Minas
-Gerais* (Versão 1.0.0) [Software]. Zenodo. https://doi.org/10.5281/zenodo.XXXXXXX
+Gerais* (Versão 1.0.0) [Software]. Zenodo. https://doi.org/10.5281/zenodo.24347083
 
 ## Licença
 

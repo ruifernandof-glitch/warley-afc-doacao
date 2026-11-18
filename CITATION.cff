@@ -11,5 +11,5 @@ authors:
   - family-names: Ferreira
     given-names: Rui Fernando Correia
 keywords: [análise fatorial confirmatória, WLSMV, teoria do comportamento planejado, doação, escola pública, reprodutibilidade]
-# Após a primeira release no Zenodo, acrescente:
-# doi: 10.5281/zenodo.XXXXXXX
+doi: 10.5281/zenodo.24347083
+repository-code: "https://github.com/ruifernandof-glitch/warley-afc-doacao"
