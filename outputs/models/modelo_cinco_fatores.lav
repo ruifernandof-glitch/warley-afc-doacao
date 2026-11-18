@@ -1,0 +1,5 @@
+ATT =~ A1 + A2 + A3 + A4
+NS =~ NS1 + NS2 + NS3 + NS4
+CP =~ CP1 + CP2 + CP3 + CP4
+CONF =~ C1 + C2 + C3 + C4
+INT =~ ID1 + ID2 + ID3 + ID4
