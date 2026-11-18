@@ -1,0 +1,16 @@
+# Dados individuais: NUNCA versionar no repositório público
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+outputs/models/*.rds
+_targets/
+# Artefatos locais
+.Rhistory
+.RData
+.Rproj.user/
+renv/library/
+renv/staging/
+manuscript/index_files/
+manuscript/*.html
+*.log
